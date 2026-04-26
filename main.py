@@ -121,17 +121,14 @@ async def get_result(job_id: str):
     return JSONResponse(content=job)
 
 
+from fastapi.responses import JSONResponse, HTMLResponse
+
 @app.get("/")
 async def root():
-    """Health check / info endpoint."""
-    return {
-        "service": "Document Processing API",
-        "version": "1.0.0",
-        "endpoints": {
-            "POST /process-document": "Upload a PDF for classification and field extraction",
-            "GET /result/{job_id}": "Poll for processing results"
-        }
-    }
+    """Serve the frontend."""
+    with open("index.html", "r") as f:
+        html_content = f.read()
+    return HTMLResponse(content=html_content, status_code=200)
 
 
 if __name__ == "__main__":

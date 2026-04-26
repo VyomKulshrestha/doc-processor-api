@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocAI Processor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4rem 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(59, 130, 246, 0.5);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(15, 23, 42, 0.5);
+            margin-bottom: 2rem;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-area {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .status-processing { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+        .status-complete { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        .status-failed { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            display: none;
+        }
+
+        .result-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .result-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .json-preview {
+            margin-top: 2rem;
+            background: #1e1e1e;
+            padding: 1.5rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #d4d4d4;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>DocAI Processor</h1>
+            <p class="subtitle">Upload any PDF (Invoice, Contract, Receipt) for instant AI extraction.</p>
+        </header>
+
+        <div class="glass-card">
+            <div class="upload-area" id="drop-zone">
+                <span class="upload-icon">📄</span>
+                <h3 id="file-name" style="margin-bottom: 0.5rem;">Drag & Drop your PDF here</h3>
+                <p class="subtitle">or click to browse</p>
+                <input type="file" id="file-input" accept="application/pdf">
+            </div>
+
+            <button id="upload-btn" class="btn" disabled>Process Document</button>
+
+            <div class="status-area" id="status-area">
+                <div id="status-badge" class="status-badge status-processing">
+                    <span class="loader" id="loader"></span>
+                    <span id="status-text">Uploading...</span>
+                </div>
+                
+                <div class="result-grid" id="result-grid">
+                    <div class="result-item">
+                        <div class="result-label">Document Type</div>
+                        <div class="result-value" id="res-type">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Confidence</div>
+                        <div class="result-value" id="res-conf">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Total Amount</div>
+                        <div class="result-value" id="res-amount">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Date</div>
+                        <div class="result-value" id="res-date">-</div>
+                    </div>
+                    <div class="result-item" style="grid-column: 1 / -1;">
+                        <div class="result-label">Counterparty</div>
+                        <div class="result-value" id="res-counterparty">-</div>
+                    </div>
+                </div>
+
+                <pre class="json-preview" id="json-preview"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileName = document.getElementById('file-name');
+        const uploadBtn = document.getElementById('upload-btn');
+        
+        const statusArea = document.getElementById('status-area');
+        const statusBadge = document.getElementById('status-badge');
+        const statusText = document.getElementById('status-text');
+        const loader = document.getElementById('loader');
+        
+        const resultGrid = document.getElementById('result-grid');
+        const jsonPreview = document.getElementById('json-preview');
+
+        let selectedFile = null;
+
+        // Drag & Drop handlers
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (file.type !== 'application/pdf') {
+                alert('Please upload a PDF file.');
+                return;
+            }
+            selectedFile = file;
+            fileName.textContent = file.name;
+            uploadBtn.disabled = false;
+            
+            // Reset UI
+            statusArea.style.display = 'none';
+            resultGrid.style.display = 'none';
+            jsonPreview.style.display = 'none';
+        }
+
+        uploadBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            uploadBtn.disabled = true;
+            statusArea.style.display = 'block';
+            statusBadge.className = 'status-badge status-processing';
+            loader.style.display = 'inline-block';
+            statusText.textContent = 'Uploading & Initializing...';
+            resultGrid.style.display = 'none';
+            jsonPreview.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                // Upload
+                const uploadRes = await fetch('/process-document', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!uploadRes.ok) throw new Error('Upload failed');
+                
+                const { job_id } = await uploadRes.json();
+                
+                statusText.textContent = 'Processing (AI Extracting)...';
+                pollResult(job_id);
+
+            } catch (err) {
+                showError(err.message);
+            }
+        });
+
+        async function pollResult(jobId) {
+            try {
+                const res = await fetch(`/result/${jobId}`);
+                const data = await res.json();
+
+                if (data.status === 'processing') {
+                    setTimeout(() => pollResult(jobId), 2000);
+                } else if (data.status === 'complete') {
+                    showSuccess(data);
+                } else {
+                    showError(data.error || 'Processing failed');
+                    jsonPreview.style.display = 'block';
+                    jsonPreview.textContent = JSON.stringify(data, null, 2);
+                }
+            } catch (err) {
+                showError('Error polling results');
+            }
+        }
+
+        function showSuccess(data) {
+            loader.style.display = 'none';
+            statusBadge.className = 'status-badge status-complete';
+            statusText.textContent = `Complete (${data.processing_time_ms}ms)`;
+            
+            document.getElementById('res-type').textContent = data.document_type || 'Unknown';
+            document.getElementById('res-conf').textContent = `${(data.confidence * 100).toFixed(0)}%`;
+            
+            const fields = data.extracted_fields || {};
+            document.getElementById('res-amount').textContent = fields.total_amount ? `$${fields.total_amount}` : 'N/A';
+            document.getElementById('res-date').textContent = fields.document_date || 'N/A';
+            document.getElementById('res-counterparty').textContent = fields.counterparty || 'N/A';
+
+            resultGrid.style.display = 'grid';
+            jsonPreview.style.display = 'block';
+            jsonPreview.textContent = JSON.stringify(data, null, 2);
+            uploadBtn.disabled = false;
+        }
+
+        function showError(msg) {
+            loader.style.display = 'none';
+            statusBadge.className = 'status-badge status-failed';
+            statusText.textContent = msg;
+            uploadBtn.disabled = false;
+        }
+    </script>
+</body>
+</html>
