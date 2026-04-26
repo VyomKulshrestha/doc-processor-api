@@ -2,21 +2,19 @@
 
 ## Live URL
 
-`https://doc-processor-api.onrender.com`
-
-*(Replace with your actual Render URL after deployment)*
+`https://doc-processor-api-h0iq.onrender.com`
 
 ## Curl Commands
 
 ### 1. Upload a PDF and get a job_id
 ```bash
-curl -X POST https://doc-processor-api.onrender.com/process-document \
+curl -X POST https://doc-processor-api-h0iq.onrender.com/process-document \
   -F "file=@invoice.pdf"
 ```
 
 ### 2. Poll for the result
 ```bash
-curl https://doc-processor-api.onrender.com/result/{job_id}
+curl https://doc-processor-api-h0iq.onrender.com/result/{job_id}
 ```
 
 ## GitHub Repo
