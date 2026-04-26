@@ -1,0 +1,18 @@
+[build]
+builder = "PAKETOBUILDPACKS"
+buildpacks = ["paketo-buildpacks/python"]
+
+[build.env]
+PYTHON_VERSION = "3.12"
+
+[deploy]
+release_command = ""
+
+[[services]]
+internal_port = 8000
+protocol = "tcp"
+
+[services.concurrency]
+type = "connections"
+hard_limit = 25
+soft_limit = 20
